@@ -1,0 +1,6 @@
+configargparse
+pid
+# pylint
+# json
+# mysql.connector
+

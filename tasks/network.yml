@@ -1,0 +1,222 @@
+- name: Create a Partition, VLAN, Route domain and ip address on F5 BigIP lb
+  hosts: all[0]
+  connection: local
+
+  tasks:
+      - name: Create partition {{partition}} using the default route domain
+        bigip_command:
+            commands:
+              - "tmsh create auth partition {{partition}} description '{{nlc}}'"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create VLAN vlan{{vlan}} and tag on interface {{tagged_interfaces}}
+        bigip_command:
+            commands:
+              - "tmsh create net vlan /{{partition}}/vlan{{vlan}}-{{partition}}-LAN interfaces add { {{tagged_interfaces[0]}} { tagged }} tag {{vlan}}"
+# bug in bigip_vlan, no partition parameter
+#        bigip_vlan:
+#            name: "vlan{{vlan}}-{{partition}}-LAN"
+#            description: "{{nlc}}"
+#            tag: "{{vlan}}"
+#            tagged_interfaces: "{{tagged_interfaces}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create route domain and set VLAN {{vlan}} on the route domain
+        bigip_command:
+            commands:
+              - "tmsh create net route-domain /{{partition}}/{{partition}} id {{vlan}} vlans add { /{{partition}}/vlan{{vlan}}-{{partition}}-LAN }"
+              - "tmsh modify auth partition {{partition}} default-route-domain {{vlan}}"
+# bug in bigip_routedomain, partition parameter is ignored
+#        bigip_routedomain:
+#            id: "{{vlan}}"     # volgens procedure moet dit een id uit een lijstje zijn, navragen
+#            description: "{{nlc}}"
+#            partition: "{{partition}}"
+#            strict: "enabled"
+#            vlans:
+#              - "vlan{{vlan}}-{{partition}}-LAN"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create Self IP no ha
+        when: ha == "no"
+        bigip_command:
+            commands:
+              - "tmsh create net self /{{partition}}/{{ipprefix}}.250/24 vlan /{{partition}}/vlan{{vlan}}-{{partition}}-LAN"
+            partition: "{{partition}}"
+# bug in bigip_selfip, cannot create a self IP in a particular partition. https://github.com/F5Networks/f5-ansible/issues/229
+#        bigip_selfip:
+#            address: "{{ipprefix}}.250"
+#            name: "self-vlan{{vlan}}-LAN"
+#            netmask: "255.255.255.0"
+#            route_domain: "{{vlan}}"
+#            vlan: "vlan{{vlan}}-{{partition}}-LAN"
+#            partition: "{{partition}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create Self IP ha primary
+        when: ha == "yes"
+        bigip_selfip:
+            address: "{{ipprefix}}.251"
+            name: "self-vlan{{vlan}}-LAN"
+            netmask: "255.255.255.0"
+            route_domain: "{{vlan}}"
+            vlan: "vlan{{vlan}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create float IP ha primary
+        when: ha == "yes"
+        bigip_selfip:
+            address: "{{ipprefix}}.250"
+            name: "float-vlan{{vlan}}-LAN"
+            netmask: "255.255.255.0"
+            route_domain: "{{vlan}}"
+            vlan: "vlan{{vlan}}"
+            traffic_group: "traffic-group-1"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+- name: Create ip's secondary, ha
+  hosts: lbha
+  connection: local
+
+  tasks:
+      - name: Create partition {{partition}} using the default route domain ha secondary
+        when: ha == "yes"
+        bigip_command:
+            commands:
+              - "tmsh create auth partition {{partition}} description '{{nlc}}'"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create VLAN vlan{{vlan}} and tag on interface {{tagged_interfaces}} ha secondary
+        when: ha == "yes"
+        bigip_vlan:
+            name: "vlan{{vlan}}"
+            description: "vlan-{{vlan}}-{{partition}}-lan"
+            tag: "{{vlan}}"
+            tagged_interfaces: "{{tagged_interfaces}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Set VLAN {{vlan}} on the route domain ha secondary
+        when: ha == "yes"
+        bigip_routedomain:
+            id: "{{vlan}}"
+            description: "{{nlc}}"
+            partition: "Common"
+            strict: "enabled"
+            vlans:
+              - vlan{{vlan}}
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create Self IP ha secondary
+        when: ha == "yes"
+        bigip_selfip:
+            address: "{{ipprefix}}.252"
+            name: "self-vlan{{vlan}}-LAN"
+            netmask: "255.255.255.0"
+            route_domain: "{{vlan}}"
+            vlan: "vlan{{vlan}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create float IP ha secondary
+        when: ha == "yes"
+        bigip_selfip:
+            address: "{{ipprefix}}.250"
+            name: "float-vlan{{vlan}}-LAN"
+            netmask: "255.255.255.0"
+            route_domain: "{{vlan}}"
+            vlan: "vlan{{vlan}}"
+            traffic_group: "traffic-group-1"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Save configuration ha secondary
+        when: ha == "yes"
+        bigip_config:
+            save: yes
+            server:  "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+- name: Create default route's and save configuration
+  hosts: all[0]
+  connection: local
+
+  tasks:
+      - name: Removee default route
+        bigip_static_route:
+            name: "vlan{{vlan}}-{{klantnaam}}-default"
+            state: "absent"
+            description: "{{nlc}}"
+            destination: "0.0.0.0/0.0.0.0"
+            gateway_address: "{{ipprefix}}.254"
+            partition: "{{partition}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Create default route
+        bigip_static_route:
+            name: "vlan{{vlan}}-{{klantnaam}}-default"
+            description: "{{nlc}}"
+            destination: "0.0.0.0/0.0.0.0"
+            gateway_address: "{{ipprefix}}.254"
+            partition: "{{partition}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Save configuration primary
+        bigip_config:
+            save: yes
+            server:  "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost

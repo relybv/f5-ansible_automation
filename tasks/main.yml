@@ -1,0 +1,4 @@
+---
+# tasks file for f5-citrix
+- include: network.yml
+- include: iapp.yml
