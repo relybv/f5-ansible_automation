@@ -156,7 +156,7 @@ def main():
         webtop = lbs.webtops(id)
         logging.info(webtop)
         # loop all webtops
-        for (_,welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo,_ ) in webtop:
+        for (_,welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo,_,_ ) in webtop:
             lbs.addwebtop(welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo)
         nodes = lbs.nodes(cluster_id)
         logging.info(nodes)

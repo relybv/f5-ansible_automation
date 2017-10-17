@@ -38,8 +38,8 @@ driver = Selenium::WebDriver.for :chrome
 driver.manage.timeouts.implicit_wait = 30
 
 # open f5 management url
-driver.get 'https://212.61.222.170/tmui/login.jsp'
-driver.manage.window.maximize
+driver.get 'https://10.255.0.200/tmui/login.jsp'
+# driver.manage.window.maximize
 expect(driver.title).to eql 'BIG-IP® - ic-lab.claranet.nl (10.255.0.200)'
 
 # login
@@ -50,7 +50,7 @@ element.send_keys options[:lbpasswd]
 element.submit
 
 # goto application
-driver.navigate.to 'https://212.61.222.170/tmui/Control/jspmap/tmui/application/list.jsp'
+driver.navigate.to 'https://10.255.0.200/tmui/Control/jspmap/tmui/application/list.jsp'
 # select partition
 sleep(5)
 menu = driver.find_element(:id, 'partition_control')
