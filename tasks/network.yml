@@ -4,9 +4,8 @@
 
   tasks:
       - name: Create partition {{partition}} using the default route domain
-        bigip_command:
-            commands:
-              - "tmsh create auth partition {{partition}} description '{{nlc}}'"
+        bigip_partition:
+            name: "{{partition}}"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
@@ -14,34 +13,36 @@
         delegate_to: localhost
 
       - name: Create VLAN vlan{{vlan}} and tag on interface {{tagged_interfaces}}
-        bigip_command:
-            commands:
-              - "tmsh create net vlan /{{partition}}/vlan{{vlan}}-{{partition}}-LAN interfaces add { {{tagged_interfaces[0]}} { tagged }} tag {{vlan}}"
-# bug in bigip_vlan, no partition parameter
-#        bigip_vlan:
-#            name: "vlan{{vlan}}-{{partition}}-LAN"
-#            description: "{{nlc}}"
-#            tag: "{{vlan}}"
-#            tagged_interfaces: "{{tagged_interfaces}}"
+        bigip_vlan:
+            name: "vlan{{vlan}}-{{partition}}-LAN"
+            description: "{{nlc}}"
+            tag: "{{vlan}}"
+            tagged_interfaces: "{{tagged_interfaces}}"
             server: "{{inventory_hostname}}"
+            partition: "{{partition}}"
             user: "{{user}}"
             password: "{{password}}"
             validate_certs: "{{validate_certs}}"
         delegate_to: localhost
 
       - name: Create route domain and set VLAN {{vlan}} on the route domain
+        bigip_routedomain:
+            id: "{{vlan}}"     # volgens procedure moet dit een id uit een lijstje zijn, navragen
+            description: "{{nlc}}"
+            partition: "{{partition}}"
+            strict: "enabled"
+            vlans:
+              - "vlan{{vlan}}-{{partition}}-LAN"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Set default route on the route domain
         bigip_command:
             commands:
-              - "tmsh create net route-domain /{{partition}}/{{partition}} id {{vlan}} vlans add { /{{partition}}/vlan{{vlan}}-{{partition}}-LAN }"
               - "tmsh modify auth partition {{partition}} default-route-domain {{vlan}}"
-# bug in bigip_routedomain, partition parameter is ignored
-#        bigip_routedomain:
-#            id: "{{vlan}}"     # volgens procedure moet dit een id uit een lijstje zijn, navragen
-#            description: "{{nlc}}"
-#            partition: "{{partition}}"
-#            strict: "enabled"
-#            vlans:
-#              - "vlan{{vlan}}-{{partition}}-LAN"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
@@ -50,18 +51,13 @@
 
       - name: Create Self IP no ha
         when: ha == "no"
-        bigip_command:
-            commands:
-              - "tmsh create net self /{{partition}}/{{ipprefix}}.250/24 vlan /{{partition}}/vlan{{vlan}}-{{partition}}-LAN"
+        bigip_selfip:
+            address: "{{ipprefix}}.250"
+            name: "self-vlan{{vlan}}-LAN"
+            netmask: "255.255.255.0"
+            route_domain: "{{vlan}}"
+            vlan: "vlan{{vlan}}-{{partition}}-LAN"
             partition: "{{partition}}"
-# bug in bigip_selfip, cannot create a self IP in a particular partition. https://github.com/F5Networks/f5-ansible/issues/229
-#        bigip_selfip:
-#            address: "{{ipprefix}}.250"
-#            name: "self-vlan{{vlan}}-LAN"
-#            netmask: "255.255.255.0"
-#            route_domain: "{{vlan}}"
-#            vlan: "vlan{{vlan}}-{{partition}}-LAN"
-#            partition: "{{partition}}"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
@@ -185,7 +181,7 @@
   connection: local
 
   tasks:
-      - name: Removee default route
+      - name: Remove default route  # the next job (Create default route) wil fail if route is presen
         bigip_static_route:
             name: "vlan{{vlan}}-{{klantnaam}}-default"
             state: "absent"
@@ -198,6 +194,7 @@
             password: "{{password}}"
             validate_certs: "{{validate_certs}}"
         delegate_to: localhost
+        ignore_errors: yes
 
       - name: Create default route
         bigip_static_route:

@@ -9,6 +9,7 @@ def initargs():
     parser.add_argument('--verbose',help='add verbose messages',env_var='F5_VERBOSE',action='store_true')
     parser.add_argument('--logdest',help='path or (default) console',env_var='F5_LOGDEST',default='console')
     parser.add_argument('--noop',help='no operation',env_var='F5_NOOP',action='store_true')
+    parser.add_argument('--f5host',help='F5 host to override host from database',env_var='F5_HOST',default='undef')
     parser.add_argument('--dbip',help='database serverip address',env_var='F5_DBIP',default='127.0.0.1')
     parser.add_argument('--dbuser',help='database user',env_var='F5_DBUSER',required=True)
     parser.add_argument('--dbpasswd',help='database password',env_var='F5_DBPASSWD',required=True)

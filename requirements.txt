@@ -1,6 +1,8 @@
 configargparse
 pid
-# pylint
+pylint
 # json
-# mysql.connector
-
+f5-sdk
+bigsuds
+netaddr
+deepdiff

@@ -129,7 +129,7 @@ def main():
     logging.info(parser.format_values())
 
     ## create object and init database connection ##
-    lbs = F5(dbuser=args.dbuser, dbpassword=args.dbpasswd, database=args.db, logging=logging)
+    lbs = F5(dbhost=args.dbip, dbuser=args.dbuser, dbpassword=args.dbpasswd, database=args.db, logging=logging)
 
     if args.all == True:
       logging.info("get all instances")
@@ -163,7 +163,10 @@ def main():
         # loop all nodes
         for (_, name, ip_address, tagged_interface, cluster_id) in nodes:
             # add node
-            lbs.addhost(name, ip_address, [tagged_interface])
+            if args.f5host == 'undef':
+                lbs.addhost(name, ip_address, [tagged_interface])
+            else:
+                lbs.addhost(name, args.f5host, [tagged_interface])
 
     lbs.printjson(args.noop)
     lbs.cleanup()

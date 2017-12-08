@@ -38,9 +38,9 @@ driver = Selenium::WebDriver.for :chrome
 driver.manage.timeouts.implicit_wait = 30
 
 # open f5 management url
-driver.get 'https://10.255.0.200/tmui/login.jsp'
+driver.get 'https://212.61.222.170/tmui/login.jsp'
 # driver.manage.window.maximize
-expect(driver.title).to eql 'BIG-IP® - ic-lab.claranet.nl (10.255.0.200)'
+expect(driver.title).to eql 'BIG-IP® - ic-lb-lab-1.1.lb.nl.clara.net (10.255.0.200)'
 
 # login
 element = driver.find_element :name => "username"
@@ -50,7 +50,7 @@ element.send_keys options[:lbpasswd]
 element.submit
 
 # goto application
-driver.navigate.to 'https://10.255.0.200/tmui/Control/jspmap/tmui/application/list.jsp'
+driver.navigate.to 'https://212.61.222.170/tmui/Control/jspmap/tmui/application/list.jsp'
 # select partition
 sleep(5)
 menu = driver.find_element(:id, 'partition_control')
@@ -74,7 +74,7 @@ driver.find_element(:name, "exit_button").click
 driver.find_element(:id, "application_name").clear
 driver.find_element(:id, "application_name").send_keys "test-iapp"
 driver.find_element(:id, "template_name").click
-driver.find_element(:css, "option[value=\"/Common/f5.citrix_vdi.v2.4.1\"]").click
+driver.find_element(:css, "option[value=\"/Common/f5.citrix_vdi.v2.4.2\"]").click
 driver.find_element(:id, "/tmui/application/create.jsp?.template_selection_tabletoggle")
 driver.find_element(:id, "var__general__domain_name").click
 driver.find_element(:id, "var__general__domain_name").clear
@@ -107,8 +107,10 @@ driver.find_element(:id, "var__apm__ad_tree").click
 driver.find_element(:id, "var__apm__ad_tree").clear
 driver.find_element(:id, "var__apm__ad_tree").send_keys "ou=CLARA"
 driver.find_element(:id, "var__webui_virtual__clientssl_profile").click
-Selenium::WebDriver::Support::Select.new(driver.find_element(:id, "var__webui_virtual__clientssl_profile")).select_by(:text, "claranet-wildcard")
-driver.find_element(:css, "option[value=\"/Common/claranet-wildcard\"]").click
+# Selenium::WebDriver::Support::Select.new(driver.find_element(:id, "var__webui_virtual__clientssl_profile")).select_by(:text, "claranet-wildcard")
+Selenium::WebDriver::Support::Select.new(driver.find_element(:id, "var__webui_virtual__clientssl_profile")).select_by(:text, "clientssl")
+# driver.find_element(:css, "option[value=\"/Common/claranet-wildcard\"]").click
+driver.find_element(:css, "option[value=\"/Common/clientssl\"]").click
 driver.find_element(:id, "var__webui_virtual__addr").click
 driver.find_element(:id, "var__webui_virtual__addr").clear
 driver.find_element(:id, "var__webui_virtual__addr").send_keys "11.11.11.11"

@@ -1,11 +1,11 @@
-- name: Install and use f5.citrix_vdi.v2.4.1 iApp template
+- name: Install and use f5.citrix_vdi.v2.4.2 iApp template
   hosts: all[0]
   connection: local
 
   tasks:
-      - name: Create iApp f5.citrix_vdi.v2.4.1 template
+      - name: Create iApp f5.citrix_vdi.v2.4.2 template
         bigip_iapp_template:
-            content: "{{ lookup('file', '{{ playbook_dir }}/../files/f5.citrix_vdi.v2.4.1.tmpl') }}"
+            content: "{{ lookup('file', '{{ playbook_dir }}/../files/f5.citrix_vdi.v2.4.2.tmpl') }}"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
@@ -17,7 +17,7 @@
       - name: Create iApp f5.citrix_vdi service from iApp template
         bigip_iapp_service:
             name: "ans-iapp"
-            template: "f5.citrix_vdi.v2.4.1"
+            template: "/Common/f5.citrix_vdi.v2.4.2"
             parameters:
                 tables:
                   - name: "apm__active_directory_server"
@@ -36,6 +36,8 @@
                         parameter: ""
                         value: ""
                 variables:
+                    - name: "webui_virtual__sta"
+                      value: "12.12.12.12"
                     - name: "webui_virtual__custom_uri"
                       value: "FQDN.WEBTOP"
                     - name: "xml_broker_virtual__addr"
@@ -49,7 +51,8 @@
                       encrypted: "yes"
                       value: "M$a4$h9um+bc1n/KXcDwhMyIIzgaYJK0QKvOnsFtSc2ha6zw="
                     - name: "apm__ad_tree"
-                      value: "VAR.LDAPTREE"
+#                      value: "ou=Citrix Users, dc=Citrix, dc=example"
+                      value: "ou=Citrix Users, dc=Citrix, dc=example, dc=com"
                     - name: "apm__ad_user"
                       value: "VAR-ADSERVICEACCOUNT"
                     - name: "general__domain_name"
@@ -154,7 +157,6 @@
             password: "{{password}}"
             validate_certs: "{{validate_certs}}"
             partition: "{{partition}}"
-#            partition: "Common"
         delegate_to: localhost
 
 #      - name: Create iApp f5.citrix_vdi service from iApp template
