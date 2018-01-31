@@ -97,7 +97,7 @@ class F5(object):
 
     def changed_instances(self):
         """Get changed instances from database"""
-        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='changed'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='modify'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -109,7 +109,7 @@ class F5(object):
 
     def planned_instances(self):
         """Get planned instances from database"""
-        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='planned'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='create'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -161,7 +161,7 @@ def main():
         nodes = lbs.nodes(cluster_id)
         logging.info(nodes)
         # loop all nodes
-        for (_, name, ip_address, tagged_interface, cluster_id) in nodes:
+        for (_, name, ip_address, tagged_interface, cluster_id, version_id) in nodes:
             # add node
             if args.f5host == 'undef':
                 lbs.addhost(name, ip_address, [tagged_interface])

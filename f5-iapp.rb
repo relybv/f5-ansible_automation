@@ -71,10 +71,12 @@ end
 # create new iapp
 puts 'create iapp'
 driver.find_element(:name, "exit_button").click
+sleep(2)
 driver.find_element(:id, "application_name").clear
 driver.find_element(:id, "application_name").send_keys "test-iapp"
 driver.find_element(:id, "template_name").click
 driver.find_element(:css, "option[value=\"/Common/f5.citrix_vdi.v2.4.2\"]").click
+sleep(5)
 driver.find_element(:id, "/tmui/application/create.jsp?.template_selection_tabletoggle")
 driver.find_element(:id, "var__general__domain_name").click
 driver.find_element(:id, "var__general__domain_name").clear
