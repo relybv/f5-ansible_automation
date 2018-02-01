@@ -151,7 +151,7 @@ def main():
         iapp = lbs.iapps(id)
         logging.info(iapp)
         # loop all iapps
-        for (_, webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,_ ) in iapp:
+        for (_, webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,certificate_id,_ ) in iapp:
             lbs.addiapp(webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password)
         webtop = lbs.webtops(id)
         logging.info(webtop)
