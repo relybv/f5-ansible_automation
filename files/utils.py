@@ -20,7 +20,7 @@ def initargs():
     parser.add_argument('--delete',help='delete resources marked in database',env_var='F5_DELETE',action='store_true')
     parser.add_argument('--posttests',help='execute post tests, combine with --noop to execute post test only',env_var='F5_POSTTESTS',action='store_true')
     parser.add_argument('--all',help='deploy all entries in db',env_var='F5_ALL',action='store_true')
-    parser.add_argument('--planned',help='deploy planned changes',env_var='F5_PLANNED',action='store_true')
+    parser.add_argument('--planned',help='deploy planned changes',env_var='F5_PLANNED',action='store_true',default=True)
     parser.add_argument('--list',help='used by ansible',action='store_true')
     return parser
 
