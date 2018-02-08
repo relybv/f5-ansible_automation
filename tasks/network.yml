@@ -2,7 +2,7 @@
   hosts: all[0]
   vars:
     f5_version: 12.1.2
-    f5_patchlevel: 1.0.271
+    f5_build: 1.0.271
   connection: local
 
   tasks:
@@ -18,8 +18,8 @@
 #      - debug:
 #          msg: "{{ software[0].version }} {{ software[0].build }}"
 
-      - fail: msg="Failed, lb version is {{ software[0].version }} {{ software[0].build }}, script is tested on version {{ f5_version }} {{ f5_patchlevel }}"
-        when: ( f5_version != software[0].version or f5_patchlevel != software[0].build )
+      - fail: msg="Failed, lb version is {{ software[0].version }} {{ software[0].build }}, script is tested on version {{ f5_version }} {{ f5_build }}"
+        when: ( f5_version != software[0].version or f5_build != software[0].build )
 
 - name: Create a Partition, VLAN, Route domain and ip address on F5 BigIP lb
   hosts: all[0]
