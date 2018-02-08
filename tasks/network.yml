@@ -1,25 +1,28 @@
 - name: Check versions
   hosts: all[0]
-  vars:
-    f5_version: 12.1.2
-    f5_build: 1.0.271
+#  vars:
+#    f5_version: 12.1.2
+#    f5_build: 1.0.271
+#    f5_edition: 'Hotfix HF1'
   connection: local
 
   tasks:
       - name: Get bigip facts
         bigip_facts:
-            include: software
+            include: "software,system_info"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
             validate_certs: "{{validate_certs}}"
         delegate_to: localhost
+#        register: bigip_fact_out
+#      - debug: var=bigip_fact_out
 
-#      - debug:
-#          msg: "{{ software[0].version }} {{ software[0].build }}"
+      - debug:
+          msg: "{{ software[0].version }} {{ software[0].build }} {{ system_info.product_information.package_edition }}"
 
-      - fail: msg="Failed, lb version is {{ software[0].version }} {{ software[0].build }}, script is tested on version {{ f5_version }} {{ f5_build }}"
-        when: ( f5_version != software[0].version or f5_build != software[0].build )
+      - fail: msg="Failed, lb version is {{ software[0].version }} {{ software[0].build }} {{ system_info.product_information.package_edition }}, script is tested on version {{ f5_version }} {{ f5_build }} {{ f5_edition }}"
+        when: ( f5_version != software[0].version or f5_build != software[0].build or f5_edition != system_info.product_information.package_edition)
 
 - name: Create a Partition, VLAN, Route domain and ip address on F5 BigIP lb
   hosts: all[0]

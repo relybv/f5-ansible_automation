@@ -63,10 +63,10 @@ class F5(object):
     def addwebtop(self,welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo):
         self.dictionary["all"]["vars"].update({"welcome_text":welcome_text,"button":button,"button_start":button_start,"button_end":button_end,"search_bar":search_bar,"line_color_start":line_color_start,"line_color_end":line_color_end,"logo":logo})
 
-    def addhost(self, name, address, tagged_interfaces):
+    def addhost(self, name, address, tagged_interfaces, version, build, edition):
         """Add host to dictionary"""
         self.dictionary[name] = {"hosts" : [address]}
-        self.dictionary[name]["vars"] = {"tagged_interfaces" : tagged_interfaces}
+        self.dictionary[name]["vars"] = {"tagged_interfaces":tagged_interfaces,"f5_version":version,"f5_build":build,"f5_edition":edition}
         if self.hostcount > 0:
             self.dictionary["all"]["vars"]["ha"] = "yes"
         self.hostcount += 1
@@ -74,6 +74,16 @@ class F5(object):
     def nodes(self, cluster):
         """Get nodes from database using cluster_id"""
         self.query = ('SELECT * FROM f5_nodes WHERE f5_nodes.cluster_id=%s' % cluster)
+        self.cursor.execute(self.query)
+        return self.cursor.fetchall()
+
+    def versions(self, node):
+        """Get versions from database using node_id"""
+        self.query = ('SELECT * FROM f5_versions')
+#        self.query = ('SELECT * FROM f5_versions, f5_nodes WHERE f5_nodes.id=%s' % node)
+
+#        self.query = ('SELECT * FROM f5_versions WHERE f5_nodes.version_id=%s' % version)
+#        self.query = (' SELECT f5_versions.*, f5_nodes.id AS node_id, f5_nodes.name AS node_name FROM f5_versions, f5_clusters, f5_nodes WHERE f5_versions.id=f5_nodes.version_id AND f5_clusters.id=f5_nodes.cluster_id AND f5_clusters.id=%s' % cluster)
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -158,16 +168,22 @@ def main():
         # loop all webtops
         for (_,welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo,_,_ ) in webtop:
             lbs.addwebtop(welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo)
+
         nodes = lbs.nodes(cluster_id)
         logging.info(nodes)
+
         # loop all nodes
-        for (_, name, ip_address, tagged_interface, cluster_id, version_id) in nodes:
+        for (node_id, name, ip_address, tagged_interface, cluster_id, versions_id) in nodes:
+            versions = lbs.versions(node_id)
+            logging.info(versions)
+            for (_, version, build, edition,_,_) in versions:
+                logging.info(version)
             # add node
             if args.f5host == 'undef':
-                lbs.addhost(name, ip_address, [tagged_interface])
+                lbs.addhost(name, ip_address, [tagged_interface], version, build, edition)
             else:
-                lbs.addhost(name, args.f5host, [tagged_interface])
-
+                lbs.addhost(name, args.f5host, [tagged_interface], version, build, edition)
+            # get versions
     lbs.printjson(args.noop)
     lbs.cleanup()
 
