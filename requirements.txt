@@ -6,3 +6,4 @@ f5-sdk
 bigsuds
 netaddr
 deepdiff
+objectpath

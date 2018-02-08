@@ -1,3 +1,26 @@
+- name: Check versions
+  hosts: all[0]
+  vars:
+    f5_version: 12.1.2
+    f5_patchlevel: 1.0.271
+  connection: local
+
+  tasks:
+      - name: Get bigip facts
+        bigip_facts:
+            include: software
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+#      - debug:
+#          msg: "{{ software[0].version }} {{ software[0].build }}"
+
+      - fail: msg="Failed, lb version is {{ software[0].version }} {{ software[0].build }}, script is tested on version {{ f5_version }} {{ f5_patchlevel }}"
+        when: ( f5_version != software[0].version or f5_patchlevel != software[0].build )
+
 - name: Create a Partition, VLAN, Route domain and ip address on F5 BigIP lb
   hosts: all[0]
   connection: local
@@ -96,15 +119,14 @@
         delegate_to: localhost
 
 - name: Create ip's secondary, ha
-  hosts: lbha
+  hosts: ~.*.2
   connection: local
 
   tasks:
       - name: Create partition {{partition}} using the default route domain ha secondary
         when: ha == "yes"
-        bigip_command:
-            commands:
-              - "tmsh create auth partition {{partition}} description '{{nlc}}'"
+        bigip_partition:
+            name: "{{partition}}"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
@@ -114,8 +136,8 @@
       - name: Create VLAN vlan{{vlan}} and tag on interface {{tagged_interfaces}} ha secondary
         when: ha == "yes"
         bigip_vlan:
-            name: "vlan{{vlan}}"
-            description: "vlan-{{vlan}}-{{partition}}-lan"
+            name: "vlan{{vlan}}-{{partition}}-LAN"
+            description: "{{nlc}}"
             tag: "{{vlan}}"
             tagged_interfaces: "{{tagged_interfaces}}"
             server: "{{inventory_hostname}}"
@@ -147,7 +169,7 @@
             name: "self-vlan{{vlan}}-LAN"
             netmask: "255.255.255.0"
             route_domain: "{{vlan}}"
-            vlan: "vlan{{vlan}}"
+            vlan: "vlan{{vlan}}-{{partition}}-LAN"
             partition: "{{partition}}"
             server: "{{inventory_hostname}}"
             user: "{{user}}"
@@ -218,6 +240,17 @@
         bigip_config:
             save: yes
             server:  "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
+      - name: Sync configuration from device to group
+        when: ha == "yes"
+        bigip_configsync_actions:
+            device_group: "ic-lb-lab-1"
+            sync_device_to_group: yes
+            server: "{{inventory_hostname}}"
             user: "{{user}}"
             password: "{{password}}"
             validate_certs: "{{validate_certs}}"
