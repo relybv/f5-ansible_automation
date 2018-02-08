@@ -79,11 +79,7 @@ class F5(object):
 
     def versions(self, node):
         """Get versions from database using node_id"""
-        self.query = ('SELECT * FROM f5_versions')
-#        self.query = ('SELECT * FROM f5_versions, f5_nodes WHERE f5_nodes.id=%s' % node)
-
-#        self.query = ('SELECT * FROM f5_versions WHERE f5_nodes.version_id=%s' % version)
-#        self.query = (' SELECT f5_versions.*, f5_nodes.id AS node_id, f5_nodes.name AS node_name FROM f5_versions, f5_clusters, f5_nodes WHERE f5_versions.id=f5_nodes.version_id AND f5_clusters.id=f5_nodes.cluster_id AND f5_clusters.id=%s' % cluster)
+        self.query = ('SELECT f5_versions.* FROM f5_versions, f5_nodes WHERE f5_versions.id=f5_nodes.version_id AND f5_nodes.id=%s' % node )
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -105,9 +101,15 @@ class F5(object):
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
-    def changed_instances(self):
-        """Get changed instances from database"""
+    def modify_instances(self):
+        """Get modified instances from database"""
         self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='modify'")
+        self.cursor.execute(self.query)
+        return self.cursor.fetchall()
+
+    def check_instances(self):
+        """Get check instances from database"""
+        self.query = ("SELECT * FROM instances WHERE f5_instances.status='check'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -117,9 +119,21 @@ class F5(object):
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
-    def planned_instances(self):
+    def create_instances(self):
         """Get planned instances from database"""
         self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='create'")
+        self.cursor.execute(self.query)
+        return self.cursor.fetchall()
+
+    def delete_instances(self):
+        """Get delete instances from database"""
+        self.query = ("SELECT * FROM instances WHERE f5_instances.status='delete'")
+        self.cursor.execute(self.query)
+        return self.cursor.fetchall()
+
+    def locked_instances(self):
+        """Get locked instances from database"""
+        self.query = ("SELECT * FROM instances WHERE f5_instances.status='locked'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -146,16 +160,16 @@ def main():
       instances = lbs.instances()
     elif args.planned == True:
       logging.info("get instances marked as planned")
-      instances = lbs.planned_instances()
+      instances = lbs.create_instances()
     elif args.delete == True:
       logging.info("get instances marked as delete")
       print("not implemented")
     else:
       logging.info("get changed instances")
-      instances = lbs.changed_instances()
+      instances = lbs.modify_instances()
       logging.info(instances)
 
-    for (id, custname, nlc, vlan, ip_prefix, cluster_id, _) in instances:
+    for (id, custname, nlc, vlan, ip_prefix, cluster_id, status) in instances:
         # add customer
         lbs.addcustomer(custname,ip_prefix,nlc,custname,args.lbuser,args.lbpasswd,vlan)
         iapp = lbs.iapps(id)
