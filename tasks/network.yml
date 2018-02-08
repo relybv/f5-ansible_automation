@@ -248,7 +248,7 @@
       - name: Sync configuration from device to group
         when: ha == "yes"
         bigip_configsync_actions:
-            device_group: "ic-lb-lab-1"
+            device_group: "device_trust_group"
             sync_device_to_group: yes
             server: "{{inventory_hostname}}"
             user: "{{user}}"
