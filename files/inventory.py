@@ -57,8 +57,8 @@ class F5(object):
         self.dictionary["all"]["vars"] = {"ha":"no", "klantnaam":klantnaam, "ipprefix":ipprefix, "nlc":nlc, "partition":partition, "password":password, "user":user, "validate_certs":validate_certs, "vlan":vlan}
         self.hostcount = 0
 
-    def addiapp(self,webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password, validate_certs='no'):
-        self.dictionary["all"]["vars"].update({"webui_virtual__custom_uri":webui_virtual__custom_uri, "apm__active_directory_server":apm__active_directory_server,"apm__active_directory_username":apm__active_directory_username,"apm__active_directory_password":apm__active_directory_password,"apm__ad_user":apm__ad_user,"apm__ad_password":apm__ad_password,"apm__ad_tree":apm__ad_tree,"general__domain_name":general__domain_name,"apm__login_domain":apm__login_domain,"webui_pool__webui_dns_name":webui_pool__webui_dns_name,"webui_virtual__addr":webui_virtual__addr,"webui_virtual__clientssl_profile":webui_virtual__clientssl_profile,"xml_broker_virtual__addr":xml_broker_virtual__addr,"xml_broker_pool__monitor_app":xml_broker_pool__monitor_app,"xml_broker_pool__monitor_username":xml_broker_pool__monitor_username,"xml_broker_pool__monitor_password":xml_broker_pool__monitor_password})
+    def addiapp(self,webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,cert_name,cert_crt,cert_key,validate_certs='no'):
+        self.dictionary["all"]["vars"].update({"webui_virtual__custom_uri":webui_virtual__custom_uri, "apm__active_directory_server":apm__active_directory_server,"apm__active_directory_username":apm__active_directory_username,"apm__active_directory_password":apm__active_directory_password,"apm__ad_user":apm__ad_user,"apm__ad_password":apm__ad_password,"apm__ad_tree":apm__ad_tree,"general__domain_name":general__domain_name,"apm__login_domain":apm__login_domain,"webui_pool__webui_dns_name":webui_pool__webui_dns_name,"webui_virtual__addr":webui_virtual__addr,"webui_virtual__clientssl_profile":webui_virtual__clientssl_profile,"xml_broker_virtual__addr":xml_broker_virtual__addr,"xml_broker_pool__monitor_app":xml_broker_pool__monitor_app,"xml_broker_pool__monitor_username":xml_broker_pool__monitor_username,"xml_broker_pool__monitor_password":xml_broker_pool__monitor_password,"cert_name":cert_name,"cert_crt":cert_crt,"cert_key":cert_key})
 
     def addwebtop(self,welcome_text,button,button_start,button_end,search_bar,line_color_start,line_color_end,logo):
         self.dictionary["all"]["vars"].update({"welcome_text":welcome_text,"button":button,"button_start":button_start,"button_end":button_end,"search_bar":search_bar,"line_color_start":line_color_start,"line_color_end":line_color_end,"logo":logo})
@@ -86,6 +86,12 @@ class F5(object):
     def iapps(self, instance):
         """Get iapps from database using instance_id"""
         self.query = ('SELECT * FROM f5_iapps WHERE f5_iapps.instance_id=%s' % instance )
+        self.cursor.execute(self.query)
+        return self.cursor.fetchall()
+
+    def certificates(self, certificate_id):
+        """Get certificates from database using certificate_id"""
+        self.query = ('SELECT * FROM f5_certificates WHERE f5_certificates.id=%s' % certificate_id )
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
@@ -169,14 +175,17 @@ def main():
       instances = lbs.modify_instances()
       logging.info(instances)
 
-    for (id, custname, nlc, vlan, ip_prefix, cluster_id, status) in instances:
+    for (id, custname, nlc, vlan, ip_prefix, cluster_id, status, timestamp) in instances:
         # add customer
         lbs.addcustomer(custname,ip_prefix,nlc,custname,args.lbuser,args.lbpasswd,vlan)
         iapp = lbs.iapps(id)
         logging.info(iapp)
         # loop all iapps
-        for (_, webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,certificate_id,_ ) in iapp:
-            lbs.addiapp(webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password)
+        for (_, webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,_,certificate_id) in iapp:
+            certificates = lbs.certificates(certificate_id)
+            for (_, cert_name, cert_crt, cert_key, cert_ca) in certificates:
+              logging.info(cert_name)
+            lbs.addiapp(webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,cert_name,cert_crt,cert_key)
         webtop = lbs.webtops(id)
         logging.info(webtop)
         # loop all webtops
@@ -185,7 +194,6 @@ def main():
 
         nodes = lbs.nodes(cluster_id)
         logging.info(nodes)
-
         # loop all nodes
         for (node_id, name, ip_address, tagged_interface, cluster_id, versions_id) in nodes:
             versions = lbs.versions(node_id)

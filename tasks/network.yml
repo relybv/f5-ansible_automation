@@ -239,6 +239,19 @@
             validate_certs: "{{validate_certs}}"
         delegate_to: localhost
 
+      - name: Create ssl certificate
+        when: cert_name != ""
+        bigip_ssl_certificate:
+            name: "{{cert_name}}"
+            cert_content: "{{cert_crt}}"
+            key_content: "{{cert_key}}"
+            partition: "{{partition}}"
+            server: "{{inventory_hostname}}"
+            user: "{{user}}"
+            password: "{{password}}"
+            validate_certs: "{{validate_certs}}"
+        delegate_to: localhost
+
       - name: Save configuration primary
         bigip_config:
             save: yes
