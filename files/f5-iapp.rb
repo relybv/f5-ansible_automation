@@ -148,7 +148,7 @@ driver.find_element(:id, "var__apm__login_domain").clear
 driver.find_element(:id, "var__apm__login_domain").send_keys "#{apm__login_domain}"
 driver.find_element(:id, "var__apm__active_directory_server__host___1").click
 driver.find_element(:id, "var__apm__active_directory_server__host___1").clear
-driver.find_element(:id, "var__apm__active_directory_server__host___1").send_keys "#{apm__active_directory_server}"
+driver.find_element(:id, "var__apm__active_directory_server__host___1").send_keys "ad1.claranet.nl"
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").click
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").clear
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").send_keys "#{apm__active_directory_server}"
@@ -171,43 +171,29 @@ driver.find_element(:id, "var__apm__ad_tree").click
 driver.find_element(:id, "var__apm__ad_tree").clear
 driver.find_element(:id, "var__apm__ad_tree").send_keys "#{apm__ad_tree}"
 driver.find_element(:id, "var__webui_virtual__clientssl_profile").click
-Selenium::WebDriver::Support::Select.new(driver.find_element(:id, "var__webui_virtual__clientssl_profile")).select_by(:text, "/Common/#{cert_name}")
+Selenium::WebDriver::Support::Select.new(driver.find_element(:id, "var__webui_virtual__clientssl_profile")).select_by(:text, "clientssl")
 driver.find_element(:css, "option[value=\"/Common/clientssl\"]").click
 driver.find_element(:id, "var__webui_virtual__addr").click
 driver.find_element(:id, "var__webui_virtual__addr").clear
-driver.find_element(:id, "var__webui_virtual__addr").send_keys "11.11.11.11"
+driver.find_element(:id, "var__webui_virtual__addr").send_keys "#{webui_virtual__addr}"
 driver.find_element(:id, "var__webui_pool__webui_dns_name").click
 driver.find_element(:id, "var__webui_pool__webui_dns_name").clear
-driver.find_element(:id, "var__webui_pool__webui_dns_name").send_keys "FQDN.WEBTOP"
+driver.find_element(:id, "var__webui_pool__webui_dns_name").send_keys "#{webui_pool__webui_dns_name}"
 driver.find_element(:id, "var__xml_broker_virtual__client_bundle").click
 driver.find_element(:id, "var__xml_broker_virtual__client_bundle").click
 driver.find_element(:id, "var__xml_broker_virtual__client_bundle").click
 driver.find_element(:id, "var__xml_broker_pool__servers__addr___1").click
 driver.find_element(:id, "var__xml_broker_pool__servers__addr___1").clear
-driver.find_element(:id, "var__xml_broker_pool__servers__addr___1").send_keys "12.12.12.12"
+driver.find_element(:id, "var__xml_broker_pool__servers__addr___1").send_keys "#{xml_broker_virtual__addr}"
 driver.find_element(:id, "var__xml_broker_pool__monitor_username").click
 driver.find_element(:id, "var__xml_broker_pool__monitor_username").clear
-driver.find_element(:id, "var__xml_broker_pool__monitor_username").send_keys "XMLMONUSER"
+driver.find_element(:id, "var__xml_broker_pool__monitor_username").send_keys "#{xml_broker_pool__monitor_username}"
 driver.find_element(:id, "var__xml_broker_pool__monitor_password").click
 driver.find_element(:id, "var__xml_broker_pool__monitor_password").clear
-driver.find_element(:id, "var__xml_broker_pool__monitor_password").send_keys "XMLMONPASSWD"
+driver.find_element(:id, "var__xml_broker_pool__monitor_password").send_keys "#{xml_broker_pool__monitor_password}"
 driver.find_element(:id, "template_finished").click
 
-# customize template apm_full.css
-#puts 'custom iapp'
-#driver.switch_to.default_content
-#driver.find_element(:link, "Access Policy").click
-
-#driver.find_element(:link, "Customization").click
-
-#driver.switch_to.frame driver.find_element(:id, "contentframe")
-
-#driver.find_element(:id, "ext-gen1018").clear
-#driver.find_element(:id, "ext-gen1018").send_keys "Advanced Customization"
-
-
 # quit
+sleep(5)
 driver.save_screenshot 'f5-iapp.png'
-#puts "Page title is #{driver.title}"
-
 driver.quit
