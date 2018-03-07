@@ -78,7 +78,7 @@
       - name: Create Self IP no ha
         when: ha == "no"
         bigip_selfip:
-            address: "{{ipprefix}}.250"
+            address: "{{ipprefix}}.251"
             name: "self-vlan{{vlan}}-LAN"
             netmask: "255.255.255.0"
             route_domain: "{{vlan}}"
@@ -108,7 +108,7 @@
       - name: Create float IP ha primary
         when: ha == "yes"
         bigip_selfip:
-            address: "{{ipprefix}}.250"
+            address: "{{ipprefix}}.252"
             name: "float-vlan{{vlan}}-LAN"
             netmask: "255.255.255.0"
             route_domain: "{{vlan}}"
@@ -168,7 +168,7 @@
       - name: Create Self IP ha secondary
         when: ha == "yes"
         bigip_selfip:
-            address: "{{ipprefix}}.252"
+            address: "{{ipprefix}}.253"
             name: "self-vlan{{vlan}}-LAN"
             netmask: "255.255.255.0"
             route_domain: "{{vlan}}"
@@ -183,7 +183,7 @@
       - name: Create float IP ha secondary
         when: ha == "yes"
         bigip_selfip:
-            address: "{{ipprefix}}.250"
+            address: "{{ipprefix}}.251"
             name: "float-vlan{{vlan}}-LAN"
             netmask: "255.255.255.0"
             route_domain: "{{vlan}}"
