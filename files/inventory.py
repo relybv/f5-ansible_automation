@@ -115,31 +115,31 @@ class F5(object):
 
     def check_instances(self):
         """Get check instances from database"""
-        self.query = ("SELECT * FROM instances WHERE f5_instances.status='check'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='check'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
     def active_instances(self):
         """Get active instances from database"""
-        self.query = ("SELECT * FROM instances WHERE f5_instances.status='active'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='active'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
     def create_instances(self):
         """Get planned instances from database"""
-        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='create'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='create' AND f5_instances.timestamp < NOW()")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
     def delete_instances(self):
         """Get delete instances from database"""
-        self.query = ("SELECT * FROM instances WHERE f5_instances.status='delete'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='delete'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
     def locked_instances(self):
         """Get locked instances from database"""
-        self.query = ("SELECT * FROM instances WHERE f5_instances.status='locked'")
+        self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='locked'")
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
