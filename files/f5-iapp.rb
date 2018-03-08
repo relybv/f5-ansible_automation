@@ -26,14 +26,26 @@ end
 parser.parse!
 
 # check for required options
-if options[:lbuser] == nil
-        puts 'Please use --lbuser lbuser parameter'
-        exit
+if options[:lbuser] == nil 
+        if ENV['F5_LBUSER'] == nil
+            puts 'Please use --lbuser lbuser parameter or F5_LBUSER environment variable'
+            exit
+        else
+            lbuser = ENV['F5_LBUSER']
+        end
+else
+        lbuser = options[:lbuser]
 end
 
 if options[:lbpasswd] == nil
-        print 'Please use --lbpasswd lbpasswd parameter'
-        exit
+        if ENV['F5_LBPASSWD'] == nil
+            print 'Please use --lbpasswd lbpasswd parameter or F5_LBPASSWD environment variable'
+            exit
+        else
+            lbuser = ENV['F5_LBPASSWD']
+        end
+else
+        lbpasswd = options[:lbpasswd]
 end
 
 # check for stdin (example usage: cat <jsonfile> | ruby f5-iapp.rb 
@@ -106,9 +118,9 @@ driver.get "https://#{loadbalancerip}/tmui/login.jsp"
 
 # login
 element = driver.find_element :name => "username"
-element.send_keys options[:lbuser]
+element.send_keys lbuser
 element = driver.find_element :name => "passwd"
-element.send_keys options[:lbpasswd]
+element.send_keys lbpasswd
 element.submit
 
 # goto application
