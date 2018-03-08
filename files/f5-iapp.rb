@@ -1,10 +1,13 @@
 require 'optparse'
+require 'logger'
 require 'selenium-webdriver'
 require 'json'
 require 'rspec/expectations'
 include RSpec::Matchers
 
 template = "f5.citrix_vdi.v2.4.2"
+logger = Logger.new(STDERR)
+
 options = {:lbuser => nil, :Lbpasswd => nil}
 
 parser = OptionParser.new do|opts|
@@ -17,6 +20,10 @@ parser = OptionParser.new do|opts|
                 options[:lbpasswd] = lbpasswd;
         end
 
+        opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+                options[:verbose] = v
+        end
+
         opts.on('-h', '--help', 'Displays Help') do
                 puts opts
                 exit
@@ -25,27 +32,40 @@ end
 
 parser.parse!
 
+# set log level
+if options[:verbose] == nil
+        logger.level = Logger::WARN
+else
+        logger.level = Logger::INFO
+end
+
 # check for required options
 if options[:lbuser] == nil 
         if ENV['F5_LBUSER'] == nil
             puts 'Please use --lbuser lbuser parameter or F5_LBUSER environment variable'
+            logger.error("Please use --lbuser lbuser parameter or F5_LBUSER environment variable")
             exit
         else
             lbuser = ENV['F5_LBUSER']
+            logger.info("F5_LBUSER found")
         end
 else
         lbuser = options[:lbuser]
+        logger.info("--lbuser found")
 end
 
 if options[:lbpasswd] == nil
         if ENV['F5_LBPASSWD'] == nil
-            print 'Please use --lbpasswd lbpasswd parameter or F5_LBPASSWD environment variable'
+            puts 'Please use --lbpasswd lbpasswd parameter or F5_LBPASSWD environment variable'
+            logger.error("Please use --lbpasswd lbpasswd parameter or F5_LBPASSWD environment variable")
             exit
         else
-            lbuser = ENV['F5_LBPASSWD']
+            lbpasswd = ENV['F5_LBPASSWD']
+            logger.info("F5_LBPASSWD found")
         end
 else
         lbpasswd = options[:lbpasswd]
+        logger.info("--lbpasswd found")
 end
 
 # check for stdin (example usage: cat <jsonfile> | ruby f5-iapp.rb 
@@ -86,6 +106,7 @@ button = parsed["all"]["vars"]["button"]
 button_end = parsed["all"]["vars"]["button_end"]
 button_start = parsed["all"]["vars"]["button_start"]
 general__domain_name = parsed["all"]["vars"]["general__domain_name"]
+apm__active_directory_servername = "AD1.#{general__domain_name}.nl"
 ha = parsed["all"]["vars"]["ha"]
 ipprefix = parsed["all"]["vars"]["ipprefix"]
 klantnaam = parsed["all"]["vars"]["klantnaam"]
@@ -110,13 +131,14 @@ xml_broker_virtual__addr = parsed["all"]["vars"]["xml_broker_virtual__addr"]
 
 # open chrome driver
 driver = Selenium::WebDriver.for :chrome
-driver.manage.timeouts.implicit_wait = 30
+driver.manage.timeouts.implicit_wait = 5
+wait = Selenium::WebDriver::Wait.new(:timeout => 10) # seconds
 
 # open f5 management url
 driver.get "https://#{loadbalancerip}/tmui/login.jsp"
-# expect(driver.title).to eql 'BIG-IP® - ic-lb-lab-1.1.lb.nl.clara.net (10.255.0.200)'
 
 # login
+logger.info("login load balancer")
 element = driver.find_element :name => "username"
 element.send_keys lbuser
 element = driver.find_element :name => "passwd"
@@ -125,27 +147,36 @@ element.submit
 
 # goto application
 driver.navigate.to "https://#{loadbalancerip}/tmui/Control/jspmap/tmui/application/list.jsp"
+sleep(5)
 # select partition
+logger.info("select partition #{partition}")
+menu = driver.find_element(:id, 'partition_control')
+option = Selenium::WebDriver::Support::Select.new(menu)
+option.select_by(:value, "#{partition}")
+driver.switch_to.frame driver.find_element(:id, "contentframe")
+
+# check if iapp exists and delete
+begin
+    driver.find_element(:link, "#{klantnaam}")
+    logger.info("deleting existing iapp #{klantnaam}")
+    logger.info("find element checkbox0")
+    driver.find_element(:name, "checkbox0").click
+    logger.info("press delete")
+    driver.find_element(:name, "delete").click
+    driver.find_element(:name, "delete_confirm").click
+rescue
+    logger.info("no existing iapp")
+end
+# create new iapp
+logger.info("create iapp")
+driver.navigate.to "https://#{loadbalancerip}/tmui/Control/jspmap/tmui/application/list.jsp"
 sleep(5)
 menu = driver.find_element(:id, 'partition_control')
 option = Selenium::WebDriver::Support::Select.new(menu)
 option.select_by(:value, "#{partition}")
-
-# check if iapp exists
 driver.switch_to.frame driver.find_element(:id, "contentframe")
-begin
-    driver.find_element(:link, "#{klantnaam}")
-    puts 'deleting iapp'
-    driver.find_element(:name, "checkbox1").click
-    driver.find_element(:id, "delete").click
-    driver.find_element(:id, "delete_confirm").click
-rescue
-    puts 'no existing iapp'
-end
-# create new iapp
-puts 'create iapp'
 driver.find_element(:name, "exit_button").click
-sleep(2)
+sleep(5)
 driver.find_element(:id, "application_name").clear
 driver.find_element(:id, "application_name").send_keys "#{klantnaam}"
 driver.find_element(:id, "template_name").click
@@ -160,7 +191,7 @@ driver.find_element(:id, "var__apm__login_domain").clear
 driver.find_element(:id, "var__apm__login_domain").send_keys "#{apm__login_domain}"
 driver.find_element(:id, "var__apm__active_directory_server__host___1").click
 driver.find_element(:id, "var__apm__active_directory_server__host___1").clear
-driver.find_element(:id, "var__apm__active_directory_server__host___1").send_keys "ad1.claranet.nl"
+driver.find_element(:id, "var__apm__active_directory_server__host___1").send_keys "#{apm__active_directory_servername}"
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").click
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").clear
 driver.find_element(:id, "var__apm__active_directory_server__addr___1").send_keys "#{apm__active_directory_server}"
@@ -206,6 +237,9 @@ driver.find_element(:id, "var__xml_broker_pool__monitor_password").send_keys "#{
 driver.find_element(:id, "template_finished").click
 
 # quit
-sleep(5)
-driver.save_screenshot 'f5-iapp.png'
+sleep(2)
+if options[:verbose] != nil
+      driver.save_screenshot 'f5-iapp.png'
+      logger.info("screenshot f5-iapp.png saved")
+end
 driver.quit
