@@ -125,7 +125,7 @@ class F5(object):
         self.cursor.execute(self.query)
         return self.cursor.fetchall()
 
-    def create_instances(self):
+    def planned_instances(self):
         """Get planned instances from database"""
         self.query = ("SELECT * FROM f5_instances WHERE f5_instances.status='create' AND f5_instances.timestamp < NOW()")
         self.cursor.execute(self.query)
@@ -166,7 +166,7 @@ def main():
       instances = lbs.instances()
     elif args.planned == True:
       logging.info("get instances marked as planned")
-      instances = lbs.create_instances()
+      instances = lbs.planned_instances()
     elif args.delete == True:
       logging.info("get instances marked as delete")
       print("not implemented")
@@ -201,12 +201,15 @@ def main():
             for (_, version, build, edition,_,_) in versions:
                 logging.info(version)
             # add node
+            # print(name)
+            # print(id)
             if args.f5host == 'undef':
                 lbs.addhost(name, ip_address, [tagged_interface], version, build, edition)
             else:
                 lbs.addhost(name, args.f5host, [tagged_interface], version, build, edition)
             # get versions
-    lbs.printjson(args.noop)
+        lbs.printjson(args.noop)
+#    lbs.printjson(args.noop)
     lbs.cleanup()
 
 if __name__ == '__main__':
