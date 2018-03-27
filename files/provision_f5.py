@@ -62,11 +62,26 @@ class F5(object):
             print('call ansible-playbook')
             ansible_process = subprocess.Popen([ansible_path, "-i", "/tmp/getdata.sh", playbook],stdout=subprocess.PIPE)
             (out,err) = ansible_process.communicate()
+            rc_ansible = ansible_process.returncode
+            if rc_ansible == 0:
+                print('ansible-playbook success')
+            else:
+                print('ansible-playbook NO success')
+            rc_selenium = 0
             if iapp_deploy:
                 print("call selenium")
                 # leave xvfb-run to show browser when selenium is running (require xserver)
                 selenium_process = subprocess.Popen("/tmp/getdata.sh | /usr/bin/xvfb-run /usr/bin/ruby /home/ubuntu/f5-ansible_automation/files/f5-iapp.rb",shell=True,stdout=subprocess.PIPE)
                 (out,err) = selenium_process.communicate()
+                rc_selenium = selenium_process.returncode
+                if rc_selenium == 0:
+                    print('selenium success')
+                else:
+                    print('ansible-playbook NO success')
+            if (rc_ansible != 0) or (rc_selenium != 0):
+                return(1)
+            else:
+                return(0)
 
     def addcustomer(self, klantnaam, ipprefix, nlc, partition, user, password, vlan, validate_certs='no'):
         """Add customer to dictionary"""
@@ -88,6 +103,13 @@ class F5(object):
         if self.hostcount > 0:
             self.dictionary["all"]["vars"]["ha"] = "yes"
         self.hostcount += 1
+
+    def setstatus(self,id,status):
+        """set status in db"""
+        newstatus = 'modify'
+        # self.query = ('update f5_instances set status=%s where id=%s' % status id)
+        self.query = ('update f5_instances set status="%s" where id=%s' % (newstatus,id))
+        self.cursor.execute(self.query)
 
     def nodes(self, cluster):
         """Get nodes from database using cluster_id"""
@@ -227,7 +249,12 @@ def main():
                 lbs.addhost(name, ip_address, [tagged_interface], version, build, edition)
             else:
                 lbs.addhost(name, args.f5host, [tagged_interface], version, build, edition)
-        lbs.exec_scripts(args.noop,ansible_path,data_file,playbook,iapp_deploy)
+        if lbs.exec_scripts(args.noop,ansible_path,data_file,playbook,iapp_deploy) == 0:
+            print("all success")
+            lbs.setstatus(id, 'active')
+        else:
+            print("failures")
+            lbs.setstatus(id, 'failed')
     lbs.cleanup()
 
 if __name__ == '__main__':
