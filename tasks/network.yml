@@ -240,7 +240,7 @@
         delegate_to: localhost
 
       - name: Create ssl certificate
-        when: cert_name != ""
+        when: cert_name is defined
         bigip_ssl_certificate:
             name: "{{cert_name}}"
             cert_content: "{{cert_crt}}"
