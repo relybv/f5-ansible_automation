@@ -6,6 +6,9 @@
 from __future__ import print_function # only use print as a function()
 import json
 import mysql.connector
+import subprocess
+import os
+import sys
 from utils import initargs, initlogger
 from pid.decorator import pidfile
 from mysql.connector import errorcode
@@ -45,10 +48,25 @@ class F5(object):
         self.hostcount = 0
         self.query = ()
 
-    def printjson(self, noop):
-        """Print dictionary as json only if noop is not set"""
+    def exec_scripts(self, noop, ansible_path, data_file, playbook, iapp_deploy):
+        """Save dictionary as json only if noop is not set"""
         if noop == False:
-            print (json.dumps((self.dictionary), sort_keys=True, indent=4, separators=(',', ': ')))
+            file = open(data_file,'w')
+            file.write(json.dumps((self.dictionary), sort_keys=True, indent=4, separators=(',', ': ')))
+            file.close()
+            file = open('/tmp/getdata.sh', 'w')
+            file.write('#!/bin/bash\n')
+            file.write('/bin/cat /tmp/ansible-data\n')
+            file.close()
+            os.chmod("/tmp/getdata.sh", 0775)
+            print('call ansible-playbook')
+            ansible_process = subprocess.Popen([ansible_path, "-i", "/tmp/getdata.sh", playbook],stdout=subprocess.PIPE)
+            (out,err) = ansible_process.communicate()
+            if iapp_deploy:
+                print("call selenium")
+                # leave xvfb-run to show browser when selenium is running (require xserver)
+                selenium_process = subprocess.Popen("/tmp/getdata.sh | /usr/bin/xvfb-run /usr/bin/ruby /home/ubuntu/f5-ansible_automation/files/f5-iapp.rb",shell=True,stdout=subprocess.PIPE)
+                (out,err) = selenium_process.communicate()
 
     def addcustomer(self, klantnaam, ipprefix, nlc, partition, user, password, vlan, validate_certs='no'):
         """Add customer to dictionary"""
@@ -151,6 +169,9 @@ class F5(object):
 @pidfile(piddir='/tmp') ## use pid decorator for the main function ##
 def main():
     """Entry point if called as an executable"""
+    ansible_path='/usr/bin/ansible-playbook'
+    data_file='/tmp/ansible-data'
+    playbook='tasks/network.yml'
     ## init parser ##
     parser = initargs()
     args = parser.parse_args()
@@ -177,11 +198,13 @@ def main():
 
     for (id, custname, nlc, vlan, ip_prefix, cluster_id, status, timestamp) in instances:
         # add customer
+        iapp_deploy = False
         lbs.addcustomer(custname,ip_prefix,nlc,custname,args.lbuser,args.lbpasswd,vlan)
         iapp = lbs.iapps(id)
         logging.info(iapp)
         # loop all iapps
         for (_, webui_virtual__custom_uri,apm__active_directory_server,apm__active_directory_username,apm__active_directory_password,apm__ad_user,apm__ad_password,apm__ad_tree,general__domain_name,apm__login_domain,webui_pool__webui_dns_name,webui_virtual__addr,webui_virtual__clientssl_profile,xml_broker_virtual__addr,xml_broker_pool__monitor_app,xml_broker_pool__monitor_username,xml_broker_pool__monitor_password,_,certificate_id) in iapp:
+            iapp_deploy = True
             certificates = lbs.certificates(certificate_id)
             for (_, cert_name, cert_crt, cert_key, cert_ca) in certificates:
               logging.info(cert_name)
@@ -200,16 +223,11 @@ def main():
             logging.info(versions)
             for (_, version, build, edition,_,_) in versions:
                 logging.info(version)
-            # add node
-            # print(name)
-            # print(id)
             if args.f5host == 'undef':
                 lbs.addhost(name, ip_address, [tagged_interface], version, build, edition)
             else:
                 lbs.addhost(name, args.f5host, [tagged_interface], version, build, edition)
-            # get versions
-        lbs.printjson(args.noop)
-#    lbs.printjson(args.noop)
+        lbs.exec_scripts(args.noop,ansible_path,data_file,playbook,iapp_deploy)
     lbs.cleanup()
 
 if __name__ == '__main__':
