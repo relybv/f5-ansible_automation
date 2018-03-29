@@ -14,7 +14,7 @@ def initargs():
     parser.add_argument('--dbip',help='database serverip address',env_var='F5_DBIP',default='127.0.0.1')
     parser.add_argument('--dbuser',help='database user',env_var='F5_DBUSER',required=True)
     parser.add_argument('--dbpasswd',help='database password',env_var='F5_DBPASSWD',required=True)
-    parser.add_argument('--db',help='database',env_var='F5_DB',default='f5')
+    parser.add_argument('--db',help='database',env_var='F5_DB',default='provisioning')
     parser.add_argument('--lbuser',help='loadbalancer user',env_var='F5_LBUSER',required=True)
     parser.add_argument('--lbpasswd',help='loadbalancer password',env_var='F5_LBPASSWD',required=True)
     parser.add_argument('--delete',help='delete resources marked in database',env_var='F5_DELETE',action='store_true')

@@ -20,11 +20,11 @@ class F5(object):
       dbuser: An string representing the db user.
       dbpassword: An string representing the db password.
       dbhost: An string representing the db host (default '127.0.0.1').
-      database: An string representing the database (default 'f5')..
+      database: An string representing the database (default 'provisioning')..
       klantnaam: Customer name
     """
 
-    def __init__(self, dbuser, dbpassword, logging, dbhost='127.0.0.1', database='f5'):
+    def __init__(self, dbuser, dbpassword, logging, dbhost='127.0.0.1', database='provisioning'):
         """Initialize database connection and data dictionary"""
         try:
             self.cnx = mysql.connector.connect(user=dbuser, password=dbpassword, host=dbhost, database=database)
