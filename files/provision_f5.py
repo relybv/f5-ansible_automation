@@ -193,7 +193,7 @@ class F5(object):
 @pidfile(piddir='/tmp') ## use pid decorator for the main function ##
 def main():
     """Entry point if called as an executable"""
-    ansible_path='/usr/bin/ansible-playbook'
+    ansible_path='/usr/local/bin/ansible-playbook'
     data_file='/tmp/ansible-data'
     playbook='tasks/network.yml'
     ## init parser ##
