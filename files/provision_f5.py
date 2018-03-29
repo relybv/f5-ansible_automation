@@ -71,7 +71,7 @@ class F5(object):
             if iapp_deploy:
                 print("call selenium")
                 # leave xvfb-run to show browser when selenium is running (require xserver)
-                selenium_process = subprocess.Popen("/tmp/getdata.sh | /usr/bin/xvfb-run /usr/bin/ruby /home/ubuntu/f5-ansible_automation/files/f5-iapp.rb",shell=True,stdout=subprocess.PIPE)
+                selenium_process = subprocess.Popen("/tmp/getdata.sh | /usr/bin/xvfb-run /usr/bin/ruby /etc/ansible/f5-ansible_automation/files/f5-iapp.rb",shell=True,stdout=subprocess.PIPE)
                 (out,err) = selenium_process.communicate()
                 rc_selenium = selenium_process.returncode
                 if rc_selenium == 0:
