@@ -81,6 +81,8 @@ class F5(object):
             if (rc_ansible != 0) or (rc_selenium != 0):
                 return(1)
             else:
+                os.remove(data_file)
+                os.remove('/tmp/getdata.sh')
                 return(0)
 
     def addcustomer(self, klantnaam, ipprefix, nlc, partition, user, password, vlan, validate_certs='no'):
