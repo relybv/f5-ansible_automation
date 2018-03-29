@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-locals
 #pylint: disable=line-too-long

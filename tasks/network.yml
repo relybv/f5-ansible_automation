@@ -263,7 +263,7 @@
 
       - name: Sync configuration from device to group
         when: ha == "yes"
-        bigip_configsync_actions:
+        bigip_configsync_action:
             device_group: "device_trust_group"
             sync_device_to_group: yes
             server: "{{inventory_hostname}}"
